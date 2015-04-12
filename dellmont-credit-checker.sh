@@ -269,7 +269,8 @@ shift $(($OPTIND-1))
 [ -n "$DEBUG" -a -n "$QUERY_STRING" ] && echo -e "QUERY_STRING: '$QUERY_STRING'\nOPTS: '$OPTS'"
 
 # Show author information
-[ -z "$QUIET" -o -n "$HELP$CHANGELOG" ] && echo -e "\n$THIS v$VERSION by Dominic\n${THIS//?/=}"
+AUTHORSTRING="$THIS v$VERSION by Dominic"
+[ -z "$QUIET" -o -n "$HELP$CHANGELOG" ] && echo -e "\n$AUTHORSTRING\n${AUTHORSTRING//?/=}"
 
 # Show help
 if [ -n "$HELP" ]; then
