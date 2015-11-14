@@ -1,6 +1,6 @@
 Original at <http://www.timedicer.co.uk/programs/help/dellmont-credit-checker.sh.php>
 
-#dellmont-credit-checker v4.3.4 [01 Oct 2014] by Dominic
+#dellmont-credit-checker v4.3.5 [18 May 2015] by Dominic
 
 #Description
 GNU/Linux program to notify if credit on one or more Dellmont/Finarea/Betamax voip provider accounts is running low. Once successfully tested it can be run as daily cron job with **-q** option and **-m email_address** option so that an email is generated when action to top up credit on the account is required. Can also run under MS Windows using Cygwin (<http://www.cygwin.com/>), or can be run as CGI job on Linux/Apache webserver.
@@ -112,6 +112,7 @@ If one of these (or another which you know is run by Dellmont) does not work, ru
 A page showing relative prices for many of these sites can be found at <http://backsla.sh/betamax>.
 
 #Changelog
+    4.3.5 [18 May 2015]: move cookiejar file location to /var/tmp
 	4.3.4 [01 Oct 2014]: minor bugfix
 	4.3.3 [06 Sep 2014]: allow checking of multiple accounts for same provider
 	4.3.2 [05 Sep 2014]: improvements to debug text and error output

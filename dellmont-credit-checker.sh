@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="4.3.4 [01 Oct 2014]"
+VERSION="4.3.5 [18 May 2015]"
 
 # Define functions for later use
 send_message() {
@@ -25,7 +25,7 @@ check_credit_level() {
 		[ -n "$VERBOSE" ] && echo -e "\n$1" || echo -n "$1 "
 	fi
 	# Set up cookiejar
-	COOKIEJAR="$TEMP/$THIS-$1-$2-COOKIEJAR.txt"
+	COOKIEJAR="/var/tmp/$THIS-$1-$2-COOKIEJAR.txt"
 	if [ -n "$NEWCOOKIEJAR" ]; then
 		rm -f "$COOKIEJAR"; touch "$COOKIEJAR"; chmod 666 "$COOKIEJAR"
 		[ -z "$QUIET" ] && echo "  deleted any existing cookie jar"
@@ -136,7 +136,7 @@ check_credit_level() {
 				HIDDEN=" -F login[usercode]=\"$REPLY\""
 			else
 				[ -n "$QUIET" ] && echo -n "$1: "
-				echo "[FAIL] - captcha code requested"
+				echo "[FAIL] - captcha code requested, try again with -c option"
 				rm -f "$COOKIEJAR"
 				USEFILE=0
 				break
@@ -417,6 +417,7 @@ fi
 if [ -n "$CHANGELOG" ]; then
 	[ -n "$HELP" ] && echo "Changelog:" || echo
 	echo "\
+4.3.5 [18 May 2015]: move cookiejar file location to /var/tmp
 4.3.4 [01 Oct 2014]: minor bugfix
 4.3.3 [06 Sep 2014]: allow checking of multiple accounts for same provider
 4.3.2 [05 Sep 2014]: improvements to debug text and error output
