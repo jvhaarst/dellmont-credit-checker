@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="4.3.5 [18 May 2015]"
+VERSION="4.3.6 [08 Feb 2016]"
 
 # Define functions for later use
 send_message() {
@@ -180,7 +180,7 @@ check_credit_level() {
 		fi
 	done
 	# Get credit from retrieved file
-	[ $USEFILE -gt 0 ] && CREDITCENTS=$(sed -n '/class="[^"]*balance"/{s/.*euro; //;s/.*\$//;s/<.*//;s/\.//;p}' "$TEMP/$THIS-$1-$USEFILE.htm")
+	[ $USEFILE -gt 0 ] && CREDITCENTS=$(sed -n '/class="[^"]*balance"/{s/.*euro; //;s/.*\$//;s/<.*//;s/\.//;s/^0*//;p}' "$TEMP/$THIS-$1-$USEFILE.htm")
 	if [ -n "$DEBUG" ];then
 		echo "Credit (cents)    : '$CREDITCENTS'"
 	else
@@ -332,7 +332,7 @@ allow a second login 24 hours later without requiring new cookies)
 
 Dependencies: awk, bash, coreutils, curl, grep, openssl, sed, [sendmail]
 
-License: Copyright 2015 Dominic Raferd. Licensed under the Apache License, \
+License: Copyright 2016 Dominic Raferd. Licensed under the Apache License, \
 Version 2.0 (the \"License\"); you may not use this file except in compliance \
 with the License. You may obtain a copy of the License at \
 http://www.apache.org/licenses/LICENSE-2.0. Unless required by applicable \
@@ -417,6 +417,7 @@ fi
 if [ -n "$CHANGELOG" ]; then
 	[ -n "$HELP" ] && echo "Changelog:" || echo
 	echo "\
+4.3.6 [08 Feb 2016]: bugfix for credit <100 eurocents
 4.3.5 [18 May 2015]: move cookiejar file location to /var/tmp
 4.3.4 [01 Oct 2014]: minor bugfix
 4.3.3 [06 Sep 2014]: allow checking of multiple accounts for same provider
