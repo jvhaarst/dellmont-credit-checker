@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION="4.3.6 [08 Feb 2016]"
+VERSION="4.3.7 [19 Feb 2016]"
 
 # Define functions for later use
 send_message() {
@@ -25,7 +25,7 @@ check_credit_level() {
 		[ -n "$VERBOSE" ] && echo -e "\n$1" || echo -n "$1 "
 	fi
 	# Set up cookiejar
-	COOKIEJAR="/var/tmp/$THIS-$1-$2-COOKIEJAR.txt"
+	COOKIEJAR="/var/tmp/$THIS-$1-$2-cookiejar.txt"
 	if [ -n "$NEWCOOKIEJAR" ]; then
 		rm -f "$COOKIEJAR"; touch "$COOKIEJAR"; chmod 666 "$COOKIEJAR"
 		[ -z "$QUIET" ] && echo "  deleted any existing cookie jar"
@@ -201,7 +201,7 @@ check_credit_level() {
 			else
 				local PREVCREDIT=("2000-01-01 00:00 0")
 			fi
-			echo -e "`date +"%Y-%m-%d %T"`\t$CREDITCENTS">>"$6"
+			echo -e "`date +"%Y-%m-%d %T"`\t$CREDITCENTS">>"$6" 2>/dev/null || echo "Warning: unable to write to $6" >&2
 			local CREDITFALL=$((${PREVCREDIT[2]}-$CREDITCENTS))
 			[ -n "$DEBUG" ] && echo -en "Previous credit   : '${PREVCREDIT[2]}' at ${PREVCREDIT[0]} ${PREVCREDIT[1]}\nCredit Reduction  : '$CREDITFALL'"
 			if [ $CREDITFALL -gt $5 ]; then
@@ -417,6 +417,7 @@ fi
 if [ -n "$CHANGELOG" ]; then
 	[ -n "$HELP" ] && echo "Changelog:" || echo
 	echo "\
+4.3.7 [19 Feb 2016]: if the specified credit_recordfile can't be accessed, show warning instead of failing
 4.3.6 [08 Feb 2016]: bugfix for credit <100 eurocents
 4.3.5 [18 May 2015]: move cookiejar file location to /var/tmp
 4.3.4 [01 Oct 2014]: minor bugfix
