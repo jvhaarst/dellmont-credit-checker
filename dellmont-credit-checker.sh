@@ -1,5 +1,10 @@
 #!/bin/bash
-VERSION="4.3.7 [19 Feb 2016]"
+VERSION="4.4.1 [29 Jun 2016]"
+if [ -z "$TEMP" ]; then
+	for TEMP in /tmp /var/tmp /var/temp /temp $PWD; do
+		[ -d "$TEMP" ] && break
+	done
+fi
 
 # Define functions for later use
 send_message() {
@@ -25,16 +30,17 @@ check_credit_level() {
 		[ -n "$VERBOSE" ] && echo -e "\n$1" || echo -n "$1 "
 	fi
 	# Set up cookiejar
-	COOKIEJAR="/var/tmp/$THIS-$1-$2-cookiejar.txt"
+	COOKIEJAR="$TEMP/$THIS-$(id -u)-$1-$2-cookiejar.txt"
+	[[ -n $DEBUG ]] && echo "COOKIEJAR: '$COOKIEJAR'"
 	if [ -n "$NEWCOOKIEJAR" ]; then
-		rm -f "$COOKIEJAR"; touch "$COOKIEJAR"; chmod 666 "$COOKIEJAR"
+		rm -f "$COOKIEJAR"; touch "$COOKIEJAR"	#; chmod 600 "$COOKIEJAR"
 		[ -z "$QUIET" ] && echo "  deleted any existing cookie jar"
 	elif [ ! -f "$COOKIEJAR" ]; then
-		touch "$COOKIEJAR"; chmod 666 "$COOKIEJAR"
+		touch "$COOKIEJAR"	#; chmod 600 "$COOKIEJAR"
 		[ -n "$VERBOSE" ] && echo "  could not find any existing cookie jar"
 	# Check whether cookie is still valid
 	else
-		[ $(stat -c %a "$COOKIEJAR") -ne 666 ] && chmod 666 "$COOKIEJAR"
+		#[ $(stat -c %a "$COOKIEJAR") -ne 600 ] && chmod 600 "$COOKIEJAR"
 		FIRSTEXPIRE=$(grep "#Http" "$COOKIEJAR"|grep -v "deleted"|awk '{if ($5!=0) print $5}'|sort -u|head -n 1)
 		if [ -n "$FIRSTEXPIRE" ]; then
 			if [ $(date +%s) -gt $FIRSTEXPIRE ]; then
@@ -68,6 +74,7 @@ check_credit_level() {
 
 	# Curl settings
 	# -L --location option follows redirects, -i --include adds header information to the output file (makes debug easier)
+	
 	CURLOPTIONS=( "--user-agent" "\"$USERAGENT\"" "--max-time" "30" "--insecure" "--show-error" "--location" )
 	#CURLOPTIONS=( "--max-time" "30" "--insecure" "--show-error" "--location" )
 	[ -z "$DEBUG" ] && CURLOPTIONS+=( "--silent" ) || echo -e "\nCURLOPTIONS       : ${CURLOPTIONS[@]}"
@@ -77,23 +84,23 @@ check_credit_level() {
 	for ((RETRIEVELOOP=1; RETRIEVELOOP<=3; RETRIEVELOOP++)); do
 		[ $RETRIEVELOOP -gt 1 ] && echo -n "  try $RETRIEVELOOP/3: "
 		unset EXPIRED
-		curl -b "$COOKIEJAR" -c "$COOKIEJAR" "${CURLOPTIONS[@]}" --fail --include -o "$TEMP/$THIS-$1-1.htm" "$PAGE1"
+		curl -b "$COOKIEJAR" -c "$COOKIEJAR" "${CURLOPTIONS[@]}" --fail --include -o "$TEMP/$THIS-$(id -u)-$1-1.htm" "$PAGE1"
 		CURLEXIT=$?; [ -n "$DEBUG" ] && echo "Curl exit status  : $CURLEXIT"; [ $CURLEXIT -gt 0 ] && { echo "Curl exit code $CURLEXIT, aborting...">&2; return 2; }
-		[ -n "$DEBUG" ] && echo -e "Visited           : $PAGE1\nSaved as          : $TEMP/$THIS-$1-1.htm\nCookies saved as  : $COOKIEJAR"
-		if [ -n "`grep "$2" "$TEMP/$THIS-$1-1.htm"`" ]; then
+		[ -n "$DEBUG" ] && echo -e "Visited           : $PAGE1\nSaved as          : $TEMP/$THIS-$(id -u)-$1-1.htm\nCookies saved as  : $COOKIEJAR"
+		if [ -n "`grep "$2" "$TEMP/$THIS-$(id -u)-$1-1.htm"`" ]; then
 			[ -n "$DEBUG" ] && echo "We are already logged in, retrieving info from original page"
 			USEFILE=1; break
 		fi
 
 		# Locate the correct version of the hidden tag (inside Ajax code, if present)
 		unset LINESTART
-		HIDDENTAG=$(sed -n '/show_webclient&update_id=&/{s/.*=//;s/".*/\" \//p}' "$TEMP/$THIS-$1-1.htm")
+		HIDDENTAG=$(sed -n '/show_webclient&update_id=&/{s/.*=//;s/".*/\" \//p}' "$TEMP/$THIS-$(id -u)-$1-1.htm")
 		if [ -n "$HIDDENTAG" ]; then
 			# this works on some portals with Firefox useragent, not with IE or Safari
 			# find the form input line which contains the hiddentag
-			LINEOFTAG=$(grep -n "$HIDDENTAG" "$TEMP/$THIS-$1-1.htm"|awk -F: '{printf $1}')
+			LINEOFTAG=$(grep -n "$HIDDENTAG" "$TEMP/$THIS-$(id -u)-$1-1.htm"|awk -F: '{printf $1}')
 			# find the line of the preceding start of form
-			LINESTART=$(awk -v LINEOFTAG=$LINEOFTAG '{if (NR==LINEOFTAG) {printf FORMSTART; exit}; if (match($0,"<form")!=0) FORMSTART=NR}' "$TEMP/$THIS-$1-1.htm")
+			LINESTART=$(awk -v LINEOFTAG=$LINEOFTAG '{if (NR==LINEOFTAG) {printf FORMSTART; exit}; if (match($0,"<form")!=0) FORMSTART=NR}' "$TEMP/$THIS-$(id -u)-$1-1.htm")
 			[ -n "$DEBUG" ] && echo -e "Hidden  Tag       : '$HIDDENTAG'\nLine of Tag       : '$LINEOFTAG'\nForm starts @ line: '$LINESTART'"
 			[ -z "$LINESTART" ] && echo "An error occurred extracting start of the correct form"
 		fi
@@ -101,7 +108,7 @@ check_credit_level() {
 			# this decryption method seems to be required for voicetrading.com at least
 			[ -n "$DEBUG" ] && echo -e "Unable to find correct version of hidden tag directly, using decryption"
 			# extract the encrypted_string and the key
-			ENC_AND_KEY=( $(sed -n '/getDecVal/{s/.*getDecValue(//;s/).*//;s/,//;s/"//gp;q}' "$TEMP/$THIS-$1-1.htm") )
+			ENC_AND_KEY=( $(sed -n '/getDecVal/{s/.*getDecValue(//;s/).*//;s/,//;s/"//gp;q}' "$TEMP/$THIS-$(id -u)-$1-1.htm") )
 			[ -z "${ENC_AND_KEY[0]}" -o -z "${ENC_AND_KEY[1]}" ] && echo "Unable to extract encrypted magictag and/or key, aborting..." >&2 && return 3
 			[ -n "$DEBUG" ] && echo -e "Encrypted Magictag: \"${ENC_AND_KEY[0]}\"\nKey               : \"${ENC_AND_KEY[1]}\"\nDecryption using openssl..."
 			# decrypt the magictag by splitting it into 32-character lines then passing to openssl (code by Loran)
@@ -109,16 +116,16 @@ check_credit_level() {
 			[ -z "$MAGICTAG" ] && echo "An error occurred extracting magictag, aborting...">&2 && return 4
 			[ -n "$DEBUG" ] && echo -e "Decrypted Magictag: \"$MAGICTAG\""
 			# get start line of the correct form i.e. div tagged with MAGICTAG
-			LINESTART=$(grep -n "$MAGICTAG" "$TEMP/$THIS-$1-1.htm"|awk -F: '{printf $1; exit}')
+			LINESTART=$(grep -n "$MAGICTAG" "$TEMP/$THIS-$(id -u)-$1-1.htm"|awk -F: '{printf $1; exit}')
 			[ -z "$LINESTART" ] && echo "An error occurred extracting start of the correct form using magic key '$MAGICTAG', aborting...">&2 && return 5
-			[ -n "$DEBUG" ] && echo -e "Form starts @ line: '$LINESTART' of $TEMP/$THIS-$1-1.htm"
+			[ -n "$DEBUG" ] && echo -e "Form starts @ line: '$LINESTART' of $TEMP/$THIS-$(id -u)-$1-1.htm"
 		fi
 
 		# extract the form info
-		sed -n "1,$(( ${LINESTART} -1 ))d;p;/<\/form>/q" "$TEMP/$THIS-$1-1.htm">"$TEMP/$THIS-$1-3.htm"
-		[ -n "$DEBUG" ] && echo -e "Form saved as     : $TEMP/$THIS-$1-3.htm"
+		sed -n "1,$(( ${LINESTART} -1 ))d;p;/<\/form>/q" "$TEMP/$THIS-$(id -u)-$1-1.htm">"$TEMP/$THIS-$(id -u)-$1-3.htm"
+		[ -n "$DEBUG" ] && echo -e "Form saved as     : $TEMP/$THIS-$(id -u)-$1-3.htm"
 		# check for a captcha image
-		CAPTCHA=$(sed -n '/id="captcha_img/{s/.*src="//;s/".*//p;q}' "$TEMP/$THIS-$1-3.htm")
+		CAPTCHA=$(sed -n '/id="captcha_img/{s/.*src="//;s/".*//p;q}' "$TEMP/$THIS-$(id -u)-$1-3.htm")
 		unset HIDDEN
 		if [ ${#CAPTCHA} -gt 100 ]; then
 			echo -e "\nError extracting CAPTCHA code">&2
@@ -143,29 +150,29 @@ check_credit_level() {
 			fi
 		fi
 		# there are hidden fields with complicated name and data
-		HIDDEN+=$(grep -o "<input type=\"hidden\"[^>]*>" "$TEMP/$THIS-$1-3.htm"|awk -F \" '{for (i=1; i<NF; i++) {if ($i==" name=") printf " -F " $(i+1) "="; if ($i==" value=") printf $(i+1)}}')
-		FORMRETURNPAGE=`sed -n '/<form/{s/.*action="\([^"]*\).*/\1/;p;q}' "$TEMP/$THIS-$1-3.htm"`
+		HIDDEN+=$(grep -o "<input type=\"hidden\"[^>]*>" "$TEMP/$THIS-$(id -u)-$1-3.htm"|awk -F \" '{for (i=1; i<NF; i++) {if ($i==" name=") printf " -F " $(i+1) "="; if ($i==" value=") printf $(i+1)}}')
+		FORMRETURNPAGE=`sed -n '/<form/{s/.*action="\([^"]*\).*/\1/;p;q}' "$TEMP/$THIS-$(id -u)-$1-3.htm"`
 		if [ -n "$DEBUG" ]; then
 			[ -n "$HIDDEN" ] && echo -e "Hidden fields     : $HIDDEN"
-			DEBUGFILE="$TEMP/$THIS-$1-2d.htm"
+			DEBUGFILE="$TEMP/$THIS-$(id -u)-$1-2d.htm"
 			DEBUGCURLEXTRA=" --trace-ascii $DEBUGFILE "
 		else
 			unset DEBUGCURLEXTRA
 		fi
 		# Get the form data
 		if [ -n "$FORMRETURNPAGE" ]; then
-			curl -b "$COOKIEJAR" -c "$COOKIEJAR" "${CURLOPTIONS[@]}" $DEBUGCURLEXTRA -e "$PAGE1" --fail --include -F "login[username]=$2" -F "login[password]=$3" $HIDDEN  -o "$TEMP/$THIS-$1-2.htm" "$FORMRETURNPAGE"
+			curl -b "$COOKIEJAR" -c "$COOKIEJAR" "${CURLOPTIONS[@]}" $DEBUGCURLEXTRA -e "$PAGE1" --fail --include -F "login[username]=$2" -F "login[password]=$3" $HIDDEN  -o "$TEMP/$THIS-$(id -u)-$1-2.htm" "$FORMRETURNPAGE"
 			CURLEXIT=$?; [ -n "$DEBUG" ] && echo "Curl exit status  : $CURLEXIT"; [ $CURLEXIT -gt 0 ] && { echo "Curl exit code $CURLEXIT, aborting...">&2; return 8; }
-			[ -s "$TEMP/$THIS-$1-2.htm" ] || { echo "Curl failed to save file $TEMP/$THIS-$1-2.htm, aborting...">&2; return 9; }
+			[ -s "$TEMP/$THIS-$(id -u)-$1-2.htm" ] || { echo "Curl failed to save file $TEMP/$THIS-$(id -u)-$1-2.htm, aborting...">&2; return 9; }
 			if [ -n "$DEBUG" ]; then
 				sed -i "s/$3/\[hidden\]/g" "$DEBUGFILE" # remove password from debug file
-				echo -e "Visited           : $FORMRETURNPAGE\nSaved as          : $(ls -l $TEMP/$THIS-$1-2.htm)\nTrace-ascii output: $DEBUGFILE (password removed)"
+				echo -e "Visited           : $FORMRETURNPAGE\nSaved as          : $(ls -l $TEMP/$THIS-$(id -u)-$1-2.htm)\nTrace-ascii output: $DEBUGFILE (password removed)"
 			fi
-			if [ -n "$(grep "This account has been disabled" "$TEMP/$THIS-$1-2.htm")" ]; then
+			if [ -n "$(grep "This account has been disabled" "$TEMP/$THIS-$(id -u)-$1-2.htm")" ]; then
 				echo "[FAIL] - account disabled"
 				USEFILE=0; break
 			fi
-			EXPIRED=$(grep -o "your session.*expired" "$TEMP/$THIS-$1-2.htm")
+			EXPIRED=$(grep -o "your session.*expired" "$TEMP/$THIS-$(id -u)-$1-2.htm")
 			if [ -n "$EXPIRED" ]; then
 				[ -n "$DEBUG" ] && { echo "                    Session expired">&2; USEFILE=0; break; }
 				echo "[FAIL] - session expired"
@@ -180,16 +187,14 @@ check_credit_level() {
 		fi
 	done
 	# Get credit from retrieved file
-	[ $USEFILE -gt 0 ] && CREDITCENTS=$(sed -n '/class="[^"]*balance"/{s/.*euro; //;s/.*\$//;s/<.*//;s/\.//;s/^0*//;p}' "$TEMP/$THIS-$1-$USEFILE.htm")
+	[ $USEFILE -gt 0 ] && CREDITCENTS=$(sed -n '/class="[^"]*balance"/{s/.*euro; //;s/.*\$//;s/<.*//;s/\.//;s/^0*//;p}' "$TEMP/$THIS-$(id -u)-$1-$USEFILE.htm")
 	if [ -n "$DEBUG" ];then
 		echo "Credit (cents)    : '$CREDITCENTS'"
 	else
 		# Clean up
-		rm -f "$TEMP/$THIS-$1-"*.htm # note COOKIEJARs are not removed, so cookies can be reused if it is rerun
+		rm -f "$TEMP/$THIS-$(id -u)-$1-"*.htm # note COOKIEJARs are not removed, so cookies can be reused if it is rerun
 		[ -z "$4" ] || [ -z "$QUIET" -a -n "$CREDITCENTS" ] && echo -n "$CREDITCENTS"
 	fi
-	#if [ -n "$EXPIRED$CAPTCHA" ]; then
-	#	RETURNCODE=0
 	if [ -z "$CREDITCENTS" ]; then
 		echo "Error: $1 / $2 - CREDITCENTS is blank">&2
 		RETURNCODE=11
@@ -226,12 +231,12 @@ check_credit_level() {
 	return $RETURNCODE
 }
 
-# Global variables
-THIS="`basename $0`"; 
-COLUMNS=$(stty size 2>/dev/null||echo 80); 
-COLUMNS=${COLUMNS##* }
+# Start of main script
 
-# Check whether script is run as CGO
+# Global variables
+THIS="`basename $0`"; COLUMNS=$(stty size 2>/dev/null||echo 80); COLUMNS=${COLUMNS##* }
+
+# Check whether script is run as CGI
 if [ -n "$SERVER_SOFTWARE" ]; then
 	# if being called by CGI, set the content type
 	echo -e "Content-type: text/plain\n"
@@ -310,6 +315,14 @@ email if the credit \
 on the www.voipdiscount.com account falls below 3 euros (or dollars):
 www.voipdiscount.com myaccount mypassword 300
 
+Temporary_Files:
+Temporary files are saved with 600 permissions in \$TEMP which is set to a \
+standard location, normally /tmp, unless it is already defined (so you can \
+define it if you want a special location). Unless run with debug option, \
+all such files are deleted after running - except the cookiejar file which \
+is retained so it can be reused. (The same cookiejar file is also used, if \
+found, by get-vt-cdrs.sh.)
+
 CGI_Usage:
 Here is an example of how you could use $THIS on your own (presumably \
 internal) website (with CGI configured appropriately on your webserver):
@@ -330,7 +343,7 @@ allow a second login 24 hours later without requiring new cookies)
   -s  skip if captcha code is requested (e.g. for unattended process)
   -v  be more verbose
 
-Dependencies: awk, bash, coreutils, curl, grep, openssl, sed, [sendmail]
+Dependencies: awk, bash, coreutils, curl, grep, openssl, sed, [sendmail], umask
 
 License: Copyright 2016 Dominic Raferd. Licensed under the Apache License, \
 Version 2.0 (the \"License\"); you may not use this file except in compliance \
@@ -417,6 +430,10 @@ fi
 if [ -n "$CHANGELOG" ]; then
 	[ -n "$HELP" ] && echo "Changelog:" || echo
 	echo "\
+4.4.1 [29 Jun 2016]: rename cookiejar and temporary files to include userid (number) rather than username
+4.4.0 [25 Mar 2016]: bugfix
+4.3.9 [16 Mar 2016]: bugfix
+4.3.8 [15 Mar 2016]: set permissions of all files created to 600, to secure from other users, move cookiejar files back to \$TEMP and rename cookiejar filename to include \$USER so that multiple users do not overwrite one another's cookiejars
 4.3.7 [19 Feb 2016]: if the specified credit_recordfile can't be accessed, show warning instead of failing
 4.3.6 [08 Feb 2016]: bugfix for credit <100 eurocents
 4.3.5 [18 May 2015]: move cookiejar file location to /var/tmp
@@ -486,6 +503,9 @@ fi
 # Show debug info
 [ -n "$DEBUG" ] && echo -e "Debug mode"
 
+# Ensure that all files created are readable/writeable only by current user
+umask 177	
+
 # Check for conffile 
 if [ -z "$CONFFILE" ]; then
 	[ ! -s "$1" ] && CONFFILE="$(echo "$(dirname "$0")/$(basename "$0" .sh).conf")"  || CONFFILE="$1"
@@ -496,13 +516,6 @@ fi
 # Print email adress
 [ -n "$EMAIL" -a -z "$QUIET" ] && echo -e "Any low credit warnings will be emailed to $EMAIL\n"
 
-# Check for temporary directory
-if [ -z "$TEMP" ]; then
-	for TEMP in /tmp /var/tmp /var/temp /temp $PWD; do
-		[ -d "$TEMP" ] && break
-	done
-fi
-
 # Ensure CAPTCHAPATH ends with a slash, and that the path exists
 if [ -n "$CAPTCHAPATH" ];then
 	if [ "${CAPTCHAPATH:$(( ${#CAPTCHAPATH} - 1 )): 1}" != "/" ]; then
@@ -512,21 +525,22 @@ if [ -n "$CAPTCHAPATH" ];then
 	[ -d "$CAPTCHAPATH" ] || { echo "Could not find path '$CAPTCHAPATH', aborting...">&2; exit 1; }
 fi
 
-# Select (fake) user agent from a few possibles (http://www.useragentstring.com/pages/Firefox/)
+# Select (fake) user agent from a few possibles (http://www.useragentstring.com/pages/useragentstring.php?name=Firefox)
 # Do not use Safari and IE because with them we never get the embedded hiddentag
-USERAGENT[0]="Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0"
-USERAGENT[1]="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10; rv:33.0) Gecko/20100101 Firefox/33.0"
-USERAGENT[2]="Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/31.0"
-USERAGENT[3]="Mozilla/5.0 (Windows NT 6.1; WOW64; rv:31.0) Gecko/20130401 Firefox/31.0"
-USERAGENT[4]="Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0"
-USERAGENT[5]="Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20120101 Firefox/29.0"
-USERAGENT[6]="Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/29.0"
-USERAGENT[7]="Mozilla/5.0 (X11; OpenBSD amd64; rv:28.0) Gecko/20100101 Firefox/28.0"
-USERAGENT[8]="Mozilla/5.0 (X11; Linux x86_64; rv:28.0) Gecko/20100101 Firefox/28.0"
-USERAGENT[9]="Mozilla/5.0 (Windows NT 6.1; rv:27.3) Gecko/20130101 Firefox/27.3"
-USERAGENT[10]="Mozilla/5.0 (Windows NT 6.2; Win64; x64; rv:27.0) Gecko/20121011 Firefox/27.0"
-USERAGENT[11]="Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0"
-USERAGENT[12]="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:25.0) Gecko/20100101 Firefox/25.0"
+USERAGENT[0]="Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1"
+USERAGENT[1]="Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0"
+USERAGENT[2]="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10; rv:33.0) Gecko/20100101 Firefox/33.0"
+USERAGENT[3]="Mozilla/5.0 (X11; Linux i586; rv:31.0) Gecko/20100101 Firefox/31.0"
+USERAGENT[4]="Mozilla/5.0 (Windows NT 6.1; WOW64; rv:31.0) Gecko/20130401 Firefox/31.0"
+USERAGENT[5]="Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0"
+USERAGENT[6]="Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20120101 Firefox/29.0"
+USERAGENT[7]="Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/29.0"
+USERAGENT[8]="Mozilla/5.0 (X11; OpenBSD amd64; rv:28.0) Gecko/20100101 Firefox/28.0"
+USERAGENT[9]="Mozilla/5.0 (X11; Linux x86_64; rv:28.0) Gecko/20100101 Firefox/28.0"
+USERAGENT[10]="Mozilla/5.0 (Windows NT 6.1; rv:27.3) Gecko/20130101 Firefox/27.3"
+USERAGENT[11]="Mozilla/5.0 (Windows NT 6.2; Win64; x64; rv:27.0) Gecko/20121011 Firefox/27.0"
+USERAGENT[12]="Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0"
+USERAGENT[13]="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:25.0) Gecko/20100101 Firefox/25.0"
 USERAGENT="${USERAGENT[$(($RANDOM%${#USERAGENT[@]}))]}"
 [ -n "$DEBUG" ] && echo "Selected user agent: \"$USERAGENT\""
 
