@@ -208,7 +208,7 @@ check_credit_level() {
 			fi
 			echo -e "`date +"%Y-%m-%d %T"`\t$CREDITCENTS">>"$6" 2>/dev/null || echo "Warning: unable to write to $6" >&2
 			# Remove leading spaces if any, and add 10# so to make it work with credit like: "093" " 201"
-			local CREDITFALL=$((10#${PREVCREDIT[2]}-10#$(echo $CREDITCENTS | sed -e 's/^[ \t]*//)))
+			local CREDITFALL=$((10#${PREVCREDIT[2]}-10#$(echo $CREDITCENTS | sed -e 's/^[ \t]*//')))
 			[ -n "$DEBUG" ] && echo -en "Previous credit   : '${PREVCREDIT[2]}' at ${PREVCREDIT[0]} ${PREVCREDIT[1]}\nCredit Reduction  : '$CREDITFALL'"
 			if [ $CREDITFALL -gt $5 ]; then
 				send_message "Credit Reduction Warning - $1\nThe credit on your $1 account '$2' stands at ${CREDITCENTS:0:$((${#CREDITCENTS}-2))}.${CREDITCENTS:(-2):2}, and has fallen by ${CREDITFALL:0:$((${#CREDITFALL}-2))}.${CREDITFALL:(-2):2} since ${PREVCREDIT[0]} ${PREVCREDIT[1]}."
