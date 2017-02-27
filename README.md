@@ -1,6 +1,6 @@
 Original at <http://www.timedicer.co.uk/programs/help/dellmont-credit-checker.sh.php>
 
-#dellmont-credit-checker v4.3.7 [19 Feb 2016] by Dominic
+#dellmont-credit-checker v4.4.1 [29 Jun 2016] by Dominic
 
 #Description
 GNU/Linux program to notify if credit on one or more Dellmont/Finarea/Betamax voip provider accounts is running low. Once successfully tested it can be run as daily cron job with **-q** option and **-m email_address** option so that an email is generated when action to top up credit on the account is required. Can also run under MS Windows using Cygwin (<http://www.cygwin.com/>), or can be run as CGI job on Linux/Apache webserver.
@@ -44,7 +44,7 @@ http://www.mywebsite.com/dellmont-credit-checker.sh?options=-vf%20/path/to/my_co
 awk, bash, coreutils, curl, grep, openssl, sed, [sendmail]
 
 #License
-Copyright 2015 Dominic Raferd. Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0. Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+Copyright 2016 Dominic Raferd. Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0. Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
 #Portal List
 Here is a list of websites / sip portals belonging to and/or operated by Dellmont. To find more, google "is a service from dellmont sarl" (with the quotes). Try a portal with **dellmont-credit-checker.sh** - it might work!
@@ -112,7 +112,13 @@ If one of these (or another which you know is run by Dellmont) does not work, ru
 A page showing relative prices for many of these sites can be found at <http://backsla.sh/betamax>.
 
 #Changelog
-    4.3.5 [18 May 2015]: move cookiejar file location to /var/tmp
+	4.4.1 [29 Jun 2016]: rename cookiejar and temporary files to include userid (number) rather than username
+	4.4.0 [25 Mar 2016]: bugfix
+	4.3.9 [16 Mar 2016]: bugfix
+	4.3.8 [15 Mar 2016]: set permissions of all files created to 600, to secure from other users, move cookiejar files back to $TEMP and rename cookiejar filename to include $USER so that multiple users do not overwrite one another's cookiejars
+	4.3.7 [19 Feb 2016]: if the specified credit_recordfile can't be accessed, show warning instead of failing
+	4.3.6 [08 Feb 2016]: bugfix for credit <100 eurocents
+	4.3.5 [18 May 2015]: move cookiejar file location to /var/tmp
 	4.3.4 [01 Oct 2014]: minor bugfix
 	4.3.3 [06 Sep 2014]: allow checking of multiple accounts for same provider
 	4.3.2 [05 Sep 2014]: improvements to debug text and error output
