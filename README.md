@@ -1,5 +1,11 @@
 Original at <http://www.timedicer.co.uk/programs/help/dellmont-credit-checker.sh.php>
 
+To make things clear:
+
+This is my copy/fork of the original, with some changes by me because I like to do some things different from the author.
+I'll try to keep this in sync with the original as much as possible.
+
+
 #dellmont-credit-checker v4.4.1 [29 Jun 2016] by Dominic
 
 #Description
