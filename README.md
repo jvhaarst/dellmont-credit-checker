@@ -6,15 +6,15 @@ This is my copy/fork of the original, with some changes by me because I like to 
 I'll try to keep this in sync with the original as much as possible.
 
 
-#dellmont-credit-checker v4.4.1 [29 Jun 2016] by Dominic
+# dellmont-credit-checker v4.4.1 [29 Jun 2016] by Dominic
 
-#Description
+# Description
 GNU/Linux program to notify if credit on one or more Dellmont/Finarea/Betamax voip provider accounts is running low. Once successfully tested it can be run as daily cron job with **-q** option and **-m email_address** option so that an email is generated when action to top up credit on the account is required. Can also run under MS Windows using Cygwin (<http://www.cygwin.com/>), or can be run as CGI job on Linux/Apache webserver.
 
-#Usage
+# Usage
 ```dellmont-credit-checker.sh [option]```
 
-#Conffile
+# Conffile
 A conffile should be in the same directory as **dellmont-credit-checker.sh** with name **dellmont-credit-checker.conf**, or if elsewhere or differently named then be specified by option **-f**, and should contain one or more lines giving the Dellmont/Finarea/Betamax account details in the form:
 
 ```website username password [test_credit_level_in_cents] [credit_reduction_in_cents] [credit_recordfile]```
@@ -27,12 +27,12 @@ Here's an example single-line conffile to generate a warning email if the credit
 
 ```www.voipdiscount.com myaccount mypassword 300```
 
-#CGI_Usage
+# CGI_Usage
 Here is an example of how you could use **dellmont-credit-checker.sh** on your own (presumably internal) website (with CGI configured appropriately on your webserver):
 
 http://www.mywebsite.com/dellmont-credit-checker.sh?options=-vf%20/path/to/my_conf_file.conf%20-m%20me@mymailaddress.com
 
-#Options
+# Options
 
 - -c [path] - save captcha images (if any) at path (default is current path)
 - -d debug - be very verbose and retain temporary files
@@ -46,13 +46,13 @@ http://www.mywebsite.com/dellmont-credit-checker.sh?options=-vf%20/path/to/my_co
 - -s skip if captcha code is requested (e.g. for unattended process)
 - -v be more verbose
 
-#Dependencies
+# Dependencies
 awk, bash, coreutils, curl, grep, openssl, sed, [sendmail]
 
-#License
+# License
 Copyright 2016 Dominic Raferd. Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0. Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
-#Portal List
+# Portal List
 Here is a list of websites / sip portals belonging to and/or operated by Dellmont. To find more, google "is a service from dellmont sarl" (with the quotes). Try a portal with **dellmont-credit-checker.sh** - it might work!
 
 If one of these (or another which you know is run by Dellmont) does not work, run dellmont-credit-checker.sh with -d option and drop me an email attaching the temporary files (two or three per portal, password is stripped out anyway).
@@ -117,7 +117,7 @@ If one of these (or another which you know is run by Dellmont) does not work, ru
 
 A page showing relative prices for many of these sites can be found at <http://backsla.sh/betamax>.
 
-#Changelog
+# Changelog
 	4.4.1 [29 Jun 2016]: rename cookiejar and temporary files to include userid (number) rather than username
 	4.4.0 [25 Mar 2016]: bugfix
 	4.3.9 [16 Mar 2016]: bugfix
