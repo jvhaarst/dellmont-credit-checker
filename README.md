@@ -6,7 +6,7 @@ This is my copy/fork of the original, with some changes by me because I like to 
 I'll try to keep this in sync with the original as much as possible.
 
 
-# dellmont-credit-checker v4.4.1 [29 Jun 2016] by Dominic
+# dellmont-credit-checker 4.5.3 [09 Sep 2019] by Dominic
 
 # Description
 GNU/Linux program to notify if credit on one or more Dellmont/Finarea/Betamax voip provider accounts is running low. Once successfully tested it can be run as daily cron job with **-q** option and **-m email_address** option so that an email is generated when action to top up credit on the account is required. Can also run under MS Windows using Cygwin (<http://www.cygwin.com/>), or can be run as CGI job on Linux/Apache webserver.
