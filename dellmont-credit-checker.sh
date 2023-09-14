@@ -202,6 +202,8 @@ check_credit_level() {
 	if [ $USEFILE -gt 0 ]; then
 		FREEDAYS=$(sed -n '/class="freedays"/{s/.*class="freedays".//;s/ days.*$//;p}' "$TEMP/$THIS-$(id -u)-$1-$USEFILE.htm")
 		CREDITCENTS=$(sed -n '/class="[^"]*balance"/{s/.*pound; //;s/.*euro; //;s/.*\$//;s/<.*//;s/\.//;s/^0*//;p}' "$TEMP/$THIS-$(id -u)-$1-$USEFILE.htm")
+                # remove \n if present (e.g. cosmovoip)
+		CREDITCENTS=`echo "$CREDITCENTS"  | cut -d $'\n' -f 1`
 	fi
 	if [ -n "$DEBUG" ];then
 		echo "Credit            : '$CREDITCENTS'"
